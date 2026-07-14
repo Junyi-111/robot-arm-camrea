@@ -1,0 +1,40 @@
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# IDE and OS metadata
+.vscode/
+.idea/
+.DS_Store
+
+# Experiment outputs and logs
+aesthetic_rl/output/
+aesthetic_rl/logs/
+logs/
+runs/
+wandb/
+*.log
+
+# Model checkpoints and replay buffers
+ArtiMuse/checkpoints/
+ArtiMuse/checkpoints_v7/
+checkpoints/
+*.ckpt
+*.pth
+*.pt
+*.onnx
+*.safetensors
+*_replay_buffer.pkl
+
+# Generated datasets and local caches
+ArtiMuse/test_datasets/AVA/images/
+ArtiMuse/test_datasets/FLICKR-AES/images/
+ArtiMuse/test_datasets/PARA/images/
+ArtiMuse/test_datasets/TAD66K/images/
+.cache/
