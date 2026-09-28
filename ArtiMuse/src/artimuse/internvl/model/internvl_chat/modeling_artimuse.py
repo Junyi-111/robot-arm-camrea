@@ -415,6 +415,7 @@ class InternVLChatModel(PreTrainedModel):
             tokenizer,
             pixel_values,
             generation_config,
+            visual_features=None,
             history=None,
             num_patches_list=None,
             IMG_START_TOKEN='<img>',
@@ -472,6 +473,7 @@ class InternVLChatModel(PreTrainedModel):
         generation_output = self.generate_logits(pixel_values=pixel_values,
                                                  input_ids=input_ids,
                                                  attention_mask=attention_mask,
+                                                 visual_features=visual_features,
                                                  **generation_config)
 
         logits = generation_output.logits
@@ -560,8 +562,8 @@ class InternVLChatModel(PreTrainedModel):
         outputs = self.language_model(
             inputs_embeds=input_embeds,
             attention_mask=attention_mask,
-            use_cache=True,
-            output_hidden_states=True,
+            use_cache=False,
+            output_hidden_states=False,
             return_dict=True,
         )
 

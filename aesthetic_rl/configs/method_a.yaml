@@ -1,0 +1,111 @@
+vision:
+  analyze_url: http://127.0.0.1:18080/analyze
+  grounding_url: http://127.0.0.1:18081/detect
+  request_timeout_seconds: 30.0
+  image_size: 128
+  aesthetic_feature_dim: 3584
+  target_prompt: flower
+  edge_margin_ratio: 0.05
+
+reward:
+  # Fixed from the 510-demo score distribution: mean=32.02, std=7.99.
+  aesthetic_absolute_center: 32.0
+  aesthetic_absolute_scale: 8.0
+  aesthetic_absolute_weight: 0.8
+  aesthetic_delta_scale: 5.0
+  aesthetic_delta_weight: 0.2
+  aesthetic_weight: 1.0
+  # An edge-touching box contributes at most -0.25, so aesthetics dominates.
+  target_weight: 0.25
+  motion_weight: 0.02
+  smooth_weight: 0.05
+  # Effective missing penalty remains -1.0 after target_weight; also terminal.
+  missing_target_penalty: -4.0
+  # A retained Grounding DINO box may touch an edge and still continues the
+  # episode (with a continuous edge penalty). No qualifying box terminates it.
+  lost_target_terminal_frames: 1
+
+robot:
+  controlled_indices: [0, 1, 2, 4]
+  max_step_deg: [1.80, 1.08, 1.08, 1.44]
+  # On-site calibrated 2026-09-08 from a valid full-flower view. The original
+  # demonstrated seed pose was [-11.716, 18.512, -0.612, 0, 1.288, 0].
+  # Every reset levels the camera by fixing J4/J6 at 0 deg. Only J1/J2/J3/J5
+  # receive random starts and SAC/manual actions.
+  home_joint_deg: [-7.711, 23.080, -1.469, 0.0, 0.000, 0.0]
+  joint_low_deg: [-25.0, -5.0, -15.0, -5.0, -28.0, -5.0]
+  # Real-arm calibration: J3 positive commands cease to be effective at 0 deg.
+  # The wider startup bound below is recovery-only and does not expand policy motion.
+  joint_high_deg: [10.0, 60.0, 0.0, 5.0, 10.0, 5.0]
+  # Only admits a gravity-displaced disabled arm for the first slow reset.
+  # SAC/manual actions remain clipped to joint_low_deg/joint_high_deg above.
+  startup_joint_low_deg: [-30.0, -10.0, -20.0, -10.0, -35.0, -10.0]
+  startup_joint_high_deg: [15.0, 65.0, 10.0, 10.0, 35.0, 10.0]
+  # The demonstrated home has ~18% target margin. +/-5 deg cropped the flower
+  # at the lower edge in the first real trial; keep initial exploration local.
+  random_initial_deg: 2.0
+  speed_percent: 3
+  action_seconds: 0.6
+  reset_speed_percent: 3
+  reset_deg_per_second: 3.0
+  settle_seconds: 0.6
+  feedback_timeout_seconds: 1.0
+  gripper_opening_m: 0.07
+
+training:
+  seed: 42
+  batch_size: 64
+  bc_warmup_steps: 200
+  training_starts: 20
+  max_online_steps: 2000
+  max_updates: 2000
+  replay_capacity: 50000
+  demo_fraction: 0.5
+  discount: 0.97
+  tau: 0.005
+  learning_rate: 0.0003
+  temperature_learning_rate: 0.0003
+  initial_temperature: 0.01
+  checkpoint_period: 50
+  publish_period: 5
+  buffer_save_period: 50
+  max_episode_steps: 80
+
+shadow_stop:
+  # Fixed-pose calibration: epsilon=1.2*P95(abs(diff(median3 score))).
+  improvement_epsilon: 0.8186361694335936
+  deterioration_threshold: 1.6372723388671873
+  quality_score_threshold: 40.0
+  median_window_frames: 3
+  minimum_search_steps: 10
+  # Offline replay showed that a 5-step window stopped too early; begin with 15.
+  stagnation_patience_steps: 15
+  confirmation_steps: 3
+  # STOP gating deliberately requires only target presence. Edge clearance is
+  # still logged/rewarded but does not restrict possible aesthetic compositions.
+  # Active STOP returns through the guarded interpolator, verifies arrival,
+  # then scores three fresh fixed-pose frames. It never disables the arm.
+  return_deg_per_second: 2.0
+  return_joint_tolerance_deg: 0.75
+  verification_frames: 3
+  verification_interval_seconds: 0.25
+  max_return_attempts_per_episode: 1
+
+runtime:
+  camera_serial: "109622075182"
+  camera_width: 640
+  camera_height: 480
+  camera_fps: 15
+  learner_host: 127.0.0.1
+  trainer_port: 5588
+  broadcast_port: 5589
+  disable_countdown_seconds: 5
+  operator_decision_seconds: 0.75
+  # Reward-v2 starts clean; all earlier online replay/checkpoints stay intact.
+  output_dir: aesthetic_rl/method_a_artifacts/runtime_absolute_v2
+  checkpoint_dir: aesthetic_rl/method_a_artifacts/checkpoints_absolute_v2
+  # Frozen deterministic evaluation is isolated from the training runtime.
+  evaluation_output_dir: aesthetic_rl/method_a_artifacts/evaluation_checkpoint_00001731
+  evaluation_checkpoint: aesthetic_rl/method_a_artifacts/checkpoints_absolute_v2/checkpoint_00001731.msgpack
+  prepared_demo_path: aesthetic_rl/method_a_artifacts/demos/method_a_demo_absolute_v2.pkl
+  feature_cache_dir: aesthetic_rl/method_a_artifacts/feature_cache
